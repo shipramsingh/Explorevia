@@ -1,4 +1,4 @@
-# 🧭 Travel Explorer — Smart Trip Planner & Travel Discovery
+# 🧭 Explorevia — Smart Trip Planner & Travel Discovery
 
 A modern, visually captivating, responsive full-stack web application designed to help travelers discover popular and lesser-known hidden attractions in iconic destinations, select preferred places, and automatically generate optimized roadmaps with time scheduling, route maps, live weather forecasts, and budget breakdowns.
 
