@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Explore Destinations — Travel Explorer</title>
+  <meta name="description" content="Discover popular attractions and verified hidden gems, view timings, ratings, entry fees, and select places for your custom trip." />
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  
+  <link rel="stylesheet" href="/static/css/style.css" />
+  <link rel="stylesheet" href="/static/css/explore.css" />
+
+  <style>
+    /* Leaflet custom pin style overrides */
+    .custom-leaflet-pin {
+      background: transparent;
+      border: none;
+    }
+    .custom-map-marker {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: rgba(15, 23, 42, 0.9);
+      border: 2px solid var(--accent-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      font-size: 1.15rem;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+    .custom-map-marker:hover {
+      transform: scale(1.15);
+      border-color: #ffffff;
+    }
+    .custom-map-marker.gem {
+      border-color: #f59e0b;
+      box-shadow: 0 0 14px rgba(245, 158, 11, 0.5);
+    }
+    .custom-map-marker.numbered {
+      position: relative;
+    }
+    .num-badge {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: var(--accent-primary);
+      color: white;
+      font-size: 0.72rem;
+      font-weight: 800;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid white;
+    }
+    .map-popup-card {
+      font-family: var(--font-body);
+      color: #0f172a;
+      overflow: hidden;
+      border-radius: 8px;
+    }
+    .map-popup-img {
+      width: 100%;
+      height: 110px;
+      object-fit: cover;
+      display: block;
+    }
+    .map-popup-body {
+      padding: 10px;
+    }
+    .map-popup-title {
+      font-weight: 700;
+      font-size: 0.95rem;
+      margin-bottom: 4px;
+    }
+    .map-popup-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: #475569;
+      margin-bottom: 6px;
+    }
+    .map-popup-price {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #059669;
+      margin-bottom: 8px;
+    }
+    .map-popup-btn {
+      width: 100%;
+      background: #059669;
+      color: white;
+      border-radius: 4px;
+      padding: 6px;
+      font-weight: 600;
+      font-size: 0.82rem;
+    }
+  </style>
+</head>
+<body class="theme-mountain">
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <a href="/" class="brand">
+      <div class="brand-icon">🧭</div>
+      <span>Travel Explorer</span>
+    </a>
+
+    <ul class="nav-links">
+      <li><a href="/" class="nav-link">Home</a></li>
+      <li><a href="/explore" class="nav-link active">Explore Locations</a></li>
+      <li><a href="/planner" class="nav-link">Trip Planner</a></li>
+      <li><a href="/dashboard" class="nav-link">My Dashboard</a></li>
+    </ul>
+
+    <div class="nav-actions" id="navUserActions">
+      <!-- Loaded dynamically via app.js -->
+    </div>
+  </nav>
+
+  <!-- Explore Main Content -->
+  <main class="explore-container">
+    
+    <!-- Destination Header with live background and search -->
+    <section class="explore-header-section">
+      <div class="explore-hero-bg" id="exploreHeroBg"></div>
+      
+      <div class="explore-header-content">
+        <div class="destination-title-row">
+          <div class="destination-info">
+            <h1 id="destinationTitle">Explore Rishikesh</h1>
+            <p id="destinationTagline">
+              Yoga Capital of the World, river rafting, ancient temples, and Himalayan foothills.
+            </p>
+          </div>
+
+          <!-- Live Weather Pill -->
+          <div class="weather-card-pill" id="destinationWeatherPill">
+            <div class="weather-icon-temp">
+              <span>⛅</span>
+              <span>28°C</span>
+            </div>
+            <div class="weather-details">
+              <div class="weather-condition">Pleasant</div>
+              <div class="weather-sub">💧 55% • 🌧️ 20% rain</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Global Destination Search Bar -->
+        <div class="search-explore-wrapper">
+          <div class="search-explore-box">
+            <span style="font-size: 1.2rem; color: #94a3b8; margin-right: 10px;">🔍</span>
+            <input 
+              type="text" 
+              id="destinationSearchInput" 
+              placeholder="Where do you want to explore? (e.g. Rishikesh, Goa, Manali, Jaipur)..."
+              autocomplete="off"
+            />
+          </div>
+          <div class="search-suggestions-dropdown" id="searchSuggestionsDropdown">
+            <!-- Autocomplete matches populated via JS -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Category Filter Chips -->
+    <div class="category-filter-scroll">
+      <button class="category-chip active" data-category="all">
+        <span>🌐</span>
+        <span>All Places</span>
+      </button>
+      <button class="category-chip" data-category="Hidden Gems">
+        <span>💎</span>
+        <span>Hidden Gems</span>
+      </button>
+      <button class="category-chip" data-category="Adventure">
+        <span>🏔️</span>
+        <span>Adventure</span>
+      </button>
+      <button class="category-chip" data-category="Water Activities">
+        <span>🌊</span>
+        <span>Water Activities</span>
+      </button>
+      <button class="category-chip" data-category="Nature">
+        <span>🌲</span>
+        <span>Nature</span>
+      </button>
+      <button class="category-chip" data-category="Spiritual">
+        <span>🛕</span>
+        <span>Spiritual</span>
+      </button>
+      <button class="category-chip" data-category="Scenic Views">
+        <span>📸</span>
+        <span>Scenic Views</span>
+      </button>
+      <button class="category-chip" data-category="Hiking">
+        <span>🥾</span>
+        <span>Hiking</span>
+      </button>
+      <button class="category-chip" data-category="Food">
+        <span>🍴</span>
+        <span>Food & Cafes</span>
+      </button>
+    </div>
+
+    <!-- Controls Bar: Secondary Filters & Layout Toggler -->
+    <div class="explore-controls-bar">
+      <div class="results-count-text" id="resultsCount">
+        Showing 10 Attractions
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+        <!-- Hidden Gems Only Checkbox -->
+        <label style="display: flex; align-items: center; gap: 6px; font-size: 0.88rem; color: #cbd5e1; cursor: pointer;">
+          <input type="checkbox" id="filterHiddenGemsOnly" />
+          <span>💎 Hidden Gems only</span>
+        </label>
+
+        <!-- Rating Filter -->
+        <div style="background: var(--bg-card); border: 1px solid var(--border-glass); border-radius: var(--radius-full); padding: 4px 12px; font-size: 0.85rem;">
+          <label style="color: var(--text-muted); margin-right: 4px;">Rating:</label>
+          <select id="filterRating" style="background: transparent; color: white; cursor: pointer;">
+            <option value="0">All Ratings</option>
+            <option value="4.5">⭐ 4.5+</option>
+            <option value="4.7">⭐ 4.7+</option>
+          </select>
+        </div>
+
+        <!-- Price Filter -->
+        <div style="background: var(--bg-card); border: 1px solid var(--border-glass); border-radius: var(--radius-full); padding: 4px 12px; font-size: 0.85rem;">
+          <label style="color: var(--text-muted); margin-right: 4px;">Entry:</label>
+          <select id="filterPrice" style="background: transparent; color: white; cursor: pointer;">
+            <option value="99999">Any Cost</option>
+            <option value="0">Free Entry</option>
+            <option value="150">Under ₹150</option>
+            <option value="500">Under ₹500</option>
+          </select>
+        </div>
+
+        <!-- Split / Full Toggle -->
+        <div class="view-mode-toggle">
+          <button class="toggle-btn" id="viewModeToggleBtn" onclick="PlacesController.toggleViewMode()">
+            <span>🗺️</span>
+            <span>Split Map View</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Layout (Map and Cards) -->
+    <div class="explore-main-layout" id="exploreMainLayout">
+      <!-- Places Grid -->
+      <div class="places-grid" id="placesGrid">
+        <!-- Rendered dynamically via places.js -->
+      </div>
+
+      <!-- Map Panel -->
+      <div class="map-panel">
+        <div id="map"></div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Floating Trip Selection Drawer Bar -->
+  <div class="floating-trip-bar" id="floatingTripBar">
+    <div class="selected-count-badge" id="selectedTripCount">0 Places Selected</div>
+    <div style="font-size: 0.9rem; color: #cbd5e1;">Your custom selection is ready to plan</div>
+    <a href="/planner" class="btn btn-primary btn-sm">Plan My Trip →</a>
+  </div>
+
+  <!-- Place Detail Modal -->
+  <div class="modal-overlay" id="placeDetailModal">
+    <div class="modal-content">
+      <button class="modal-close-btn" onclick="PlacesController.closePlaceModal()">✕</button>
+      <div id="placeDetailModalContent" class="place-detail-modal-body">
+        <!-- Injected via PlacesController.openPlaceDetails -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <div style="max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 1.4rem;">🧭</span>
+        <strong>Travel Explorer</strong>
+      </div>
+      <div>Designed for travelers discovering places, minimizing transit time, and building memories.</div>
+      <div>&copy; 2026 Travel Explorer. All rights reserved.</div>
+    </div>
+  </footer>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  
+  <!-- App JS -->
+  <script src="/static/js/api.js"></script>
+  <script src="/static/js/map.js"></script>
+  <script src="/static/js/app.js"></script>
+  <script src="/static/js/places.js"></script>
+</body>
+</html>

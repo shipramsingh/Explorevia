@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Dashboard — Explorevia</title>
+  <meta name="description" content="View your saved travel roadmaps, upcoming trips, and bookmarked favorite places." />
+
+  <link rel="stylesheet" href="/static/css/style.css" />
+  <link rel="stylesheet" href="/static/css/dashboard.css" />
+  <link rel="stylesheet" href="/static/css/explore.css" />
+</head>
+<body class="theme-mountain">
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <a href="/" class="brand">
+      <div class="brand-icon">🧭</div>
+      <span>Explorevia</span>
+    </a>
+
+    <ul class="nav-links">
+      <li><a href="/" class="nav-link">Home</a></li>
+      <li><a href="/explore" class="nav-link">Explore Locations</a></li>
+      <li><a href="/planner" class="nav-link">Trip Planner</a></li>
+      <li><a href="/dashboard" class="nav-link active">My Dashboard</a></li>
+    </ul>
+
+    <div class="nav-actions" id="navUserActions">
+      <!-- App.js -->
+    </div>
+  </nav>
+
+  <!-- Dashboard Container -->
+  <main class="dashboard-container">
+    
+    <!-- User Profile Hero -->
+    <div class="profile-hero-card">
+      <div class="profile-left">
+        <img 
+          src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=160&auto=format&fit=crop" 
+          alt="Avatar" 
+          class="profile-avatar-large" 
+          id="dashUserAvatar" 
+        />
+        <div class="profile-info">
+          <h1 id="dashUserName">Shipram thakur</h1>
+          <p id="dashUserEmail">shipram.explorer@gmail.com</p>
+          <div style="font-size: 0.85rem; color: var(--accent-hover); margin-top: 4px;">
+            ✓ Google Verified Explorer Account
+          </div>
+        </div>
+      </div>
+
+      <div class="profile-stats-row">
+        <div class="stat-item">
+          <div class="stat-number" id="statTripsCount">0</div>
+          <div class="stat-label">Trips Planned</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number" id="statFavsCount">0</div>
+          <div class="stat-label">Saved Favorites</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dashboard Tabs -->
+    <div class="dashboard-tabs">
+      <button class="dash-tab-btn active" data-tab="trips">
+        🎒 My Saved Roadmaps
+      </button>
+      <button class="dash-tab-btn" data-tab="favorites">
+        ♥ Saved Favorite Places
+      </button>
+    </div>
+
+    <!-- Tab 1: Saved Trips -->
+    <div id="tripsTabContent">
+      <div class="saved-trips-grid" id="savedTripsGrid">
+        <!-- Populated via dashboard.js -->
+      </div>
+    </div>
+
+    <!-- Tab 2: Bookmarked Favorites -->
+    <div id="favsTabContent" style="display: none;">
+      <div class="places-grid" id="favoritesGrid">
+        <!-- Populated via dashboard.js -->
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div style="max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 1.4rem;">🧭</span>
+        <strong>Explorevia</strong>
+      </div>
+      <div>Designed for travelers discovering places, minimizing transit time, and building memories.</div>
+      <div>&copy; 2026 Travel Explorer. All rights reserved.</div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="/static/js/api.js"></script>
+  <script src="/static/js/app.js"></script>
+  <script src="/static/js/dashboard.js"></script>
+</body>
+</html>

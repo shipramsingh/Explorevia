@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Roadmap & Trip Planner — Explorevia</title>
+  <meta name="description" content="Generate an optimized travel roadmap considering opening hours, visit durations, transit times, transportation modes, and estimated budget." />
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+  <link rel="stylesheet" href="/static/css/style.css" />
+  <link rel="stylesheet" href="/static/css/planner.css" />
+
+  <style>
+    .custom-leaflet-pin {
+      background: transparent;
+      border: none;
+    }
+    .custom-map-marker {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: rgba(15, 23, 42, 0.95);
+      border: 2px solid #10b981;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      font-size: 1.15rem;
+      cursor: pointer;
+    }
+    .custom-map-marker.gem {
+      border-color: #f59e0b;
+      box-shadow: 0 0 14px rgba(245, 158, 11, 0.5);
+    }
+    .custom-map-marker.numbered {
+      position: relative;
+    }
+    .num-badge {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: #10b981;
+      color: white;
+      font-size: 0.72rem;
+      font-weight: 800;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid white;
+    }
+  </style>
+</head>
+<body class="theme-mountain">
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <a href="/" class="brand">
+      <div class="brand-icon">🧭</div>
+      <span>Travel Explorer</span>
+    </a>
+
+    <ul class="nav-links">
+      <li><a href="/" class="nav-link">Home</a></li>
+      <li><a href="/explore" class="nav-link">Explore Locations</a></li>
+      <li><a href="/planner" class="nav-link active">Trip Planner</a></li>
+      <li><a href="/dashboard" class="nav-link">My Dashboard</a></li>
+    </ul>
+
+    <div class="nav-actions" id="navUserActions">
+      <!-- App.js -->
+    </div>
+  </nav>
+
+  <!-- Planner Container -->
+  <main class="planner-container">
+    
+    <div class="planner-header">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
+        <div>
+          <h1 id="plannerDestTitle">Smart Trip Roadmap</h1>
+          <p id="plannerSubtitle">Optimized schedule based on opening hours, transit routes, and your preferences.</p>
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <a href="/explore" class="btn btn-secondary">
+            ← Add More Places
+          </a>
+          <button class="btn btn-primary" id="saveTripBtn">
+            💾 Save Trip
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Trip Configuration Form Card -->
+    <div class="planner-config-card">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <h3 style="font-family: var(--font-heading); color: #ffffff; font-size: 1.25rem;">
+          Trip Preferences & Constraints
+        </h3>
+        <span class="badge-category" id="selectedPlacesCountBadge">0 Places Selected</span>
+      </div>
+
+      <div class="planner-config-grid">
+        <!-- Duration -->
+        <div class="config-field">
+          <label for="planDuration">Trip Duration</label>
+          <div class="config-input-wrapper">
+            <span>📅</span>
+            <select id="planDuration">
+              <option value="1">1 Day</option>
+              <option value="2">2 Days</option>
+              <option value="3">3 Days</option>
+              <option value="4">4 Days</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Starting Point -->
+        <div class="config-field">
+          <label for="planStartPoint">Starting Point</label>
+          <div class="config-input-wrapper">
+            <span>🏨</span>
+            <select id="planStartPoint">
+              <option value="Hotel">Hotel / Resort</option>
+              <option value="Railway Station">Railway Station</option>
+              <option value="Bus Stand">Bus Terminal</option>
+              <option value="Current Location">Current Location</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Transportation -->
+        <div class="config-field">
+          <label for="planTransport">Transportation Mode</label>
+          <div class="config-input-wrapper">
+            <span>🚗</span>
+            <select id="planTransport">
+              <option value="Car">Car / Cab</option>
+              <option value="Bike">Bike / Scooter Rental</option>
+              <option value="Public Transport">Public Transport / Auto</option>
+              <option value="Walking">Walking / Trekking</option>
+              <option value="Mixed">Mixed</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Start Time -->
+        <div class="config-field">
+          <label for="planStartTime">Daily Start Time</label>
+          <div class="config-input-wrapper">
+            <span>⏰</span>
+            <input type="time" id="planStartTime" value="08:00" />
+          </div>
+        </div>
+
+        <!-- End Time -->
+        <div class="config-field">
+          <label for="planEndTime">Daily End Time</label>
+          <div class="config-input-wrapper">
+            <span>🌙</span>
+            <input type="time" id="planEndTime" value="20:00" />
+          </div>
+        </div>
+
+        <!-- Budget -->
+        <div class="config-field">
+          <label for="planBudget">Target Budget (₹ INR)</label>
+          <div class="config-input-wrapper">
+            <span>₹</span>
+            <input type="number" id="planBudget" value="3000" step="200" min="500" />
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top: 20px; display: flex; justify-content: flex-end;">
+        <button class="btn btn-primary" id="generateItineraryBtn">
+          ⚡ Re-optimize Roadmap
+        </button>
+      </div>
+    </div>
+
+    <!-- Smart Suggestions Banner -->
+    <div class="smart-suggestions-box" id="plannerSuggestions" style="display: none;">
+      <!-- Populated via planner.js -->
+    </div>
+
+    <!-- Warnings Banner -->
+    <div class="warnings-box" id="plannerWarnings" style="display: none;">
+      <!-- Populated via planner.js -->
+    </div>
+
+    <!-- Main Layout: Roadmap Timeline on Left, Route Map & Budget on Right -->
+    <div class="itinerary-main-layout">
+      
+      <!-- Left Column: Timeline -->
+      <div class="planner-timeline-panel">
+        <!-- Day Selector Tabs -->
+        <div class="day-selector-tabs" id="daySelectorTabs">
+          <button class="day-tab-btn active">Day 1 Overview</button>
+        </div>
+
+        <!-- Timeline Container -->
+        <div class="itinerary-timeline" id="itineraryTimeline">
+          <!-- Populated via planner.js -->
+        </div>
+      </div>
+
+      <!-- Right Column: Interactive Route Map & Budget Tracker -->
+      <div class="planner-sidebar-panel">
+        
+        <!-- Interactive Route Map -->
+        <div class="roadmap-map-card">
+          <div id="routeMap"></div>
+        </div>
+
+        <!-- Estimated Trip Budget Card -->
+        <div class="budget-card">
+          <div class="budget-header-row">
+            <h3 style="font-family: var(--font-heading); font-size: 1.25rem;">
+              Estimated Trip Budget
+            </h3>
+            <span class="budget-status-pill within" id="budgetStatusBadge">
+              🟢 Within Budget
+            </span>
+          </div>
+
+          <table class="budget-table">
+            <tbody id="budgetTableBody">
+              <tr>
+                <td>Transportation</td>
+                <td>₹800</td>
+              </tr>
+              <tr>
+                <td>Entry Tickets</td>
+                <td>₹300</td>
+              </tr>
+              <tr>
+                <td>Food & Refreshments</td>
+                <td>₹700</td>
+              </tr>
+              <tr>
+                <td>Activities & Guides</td>
+                <td>₹500</td>
+              </tr>
+              <tr>
+                <td>Miscellaneous</td>
+                <td>₹300</td>
+              </tr>
+              <tr class="budget-total-row">
+                <td>Estimated Total</td>
+                <td>₹2,600</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.4;">
+            * Costs are calculated estimates based on transit distances, current entry fees, and local meal averages.
+          </div>
+
+          <div class="savings-tips-box" id="budgetSavingsTips" style="display: none;">
+            <!-- Injected via planner.js -->
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div style="max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 1.4rem;">🧭</span>
+        <strong>Explorevia</strong>
+      </div>
+      <div>Designed for travelers discovering places, minimizing transit time, and building memories.</div>
+      <div>&copy; 2026 Travel Explorer. All rights reserved.</div>
+    </div>
+  </footer>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  
+  <!-- App JS -->
+  <script src="/static/js/api.js"></script>
+  <script src="/static/js/map.js"></script>
+  <script src="/static/js/app.js"></script>
+  <script src="/static/js/planner.js"></script>
+</body>
+</html>
